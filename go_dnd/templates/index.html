@@ -1,0 +1,17 @@
+<!doctype html>
+
+<html>
+
+    <head>
+        <title>Tables</title>
+    </head>
+    <body>
+        <h1> Select a table: </h1>
+        <div>
+        {{range $key, $val := .}}
+            <p><a href="derp">{{ $val }}</a></p>
+        {{end}}
+        </div>
+    </body>
+
+</html>
