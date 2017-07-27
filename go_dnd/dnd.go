@@ -7,7 +7,6 @@ import (
     "database/sql"
     _ "github.com/lib/pq" //import a package for its side-effects only
     //"reflect"
-    "dnd/db_structs"
 )
 
 var templates = template.Must(template.ParseFiles("./templates/index.html"))
@@ -56,9 +55,10 @@ func main(){
     uname := "gopher"
 
     fmt.Println("Starting dnd.main")
+
+    //structs that represent database tables in ./db_structs.go
     m = make(map[string]interface{})
-    db_structs.init_db_structs(&m)
-    fmt.Println(m["npc"])
+    init_db_structs(&m)
 
     db, err = sql.Open("postgres",
         fmt.Sprintf("dbname=%s user=%s password=gopher", dbname, uname))

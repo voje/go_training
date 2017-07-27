@@ -1,8 +1,8 @@
-package go_dnd
+package main
 
 func init_db_structs(m *map[string]interface{}) {
-    m["npc"] = npc{}
-    m["race"] = race{}
+    (*m)["npc"] = npc{}
+    (*m)["race"] = race{}
 }
 
 type npc struct {
