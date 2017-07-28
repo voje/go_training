@@ -1,4 +1,4 @@
-package main
+package my_mux
 
 import (
     "net/http"
@@ -20,8 +20,6 @@ func (rm *Regex_mux) HandleFunc (pattern *regexp.Regexp, handler func(w http.Res
 }
 
 func (rm Regex_mux) ServeHTTP (w http.ResponseWriter, r *http.Request) {
-    fmt.Println("func ServeHTTP")
-
     //remove trailing '/'
     if r.URL.Path[len(r.URL.Path)-1] == '/' {
         r.URL.Path = r.URL.Path[:len(r.URL.Path)-1]
@@ -33,8 +31,10 @@ func (rm Regex_mux) ServeHTTP (w http.ResponseWriter, r *http.Request) {
             return
         }
     }
+    http.Redirect(w, r, "/", http.StatusNotFound)
 }
 
+/*
 func handlePizza(w http.ResponseWriter, r *http.Request) {
     fmt.Println("Pizza has arrived!")
 }
@@ -60,3 +60,4 @@ func main() {
 
     http.ListenAndServe(":8002", regmux)
 }
+*/
