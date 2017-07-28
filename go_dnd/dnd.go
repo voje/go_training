@@ -57,13 +57,14 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 func handleCreate(w http.ResponseWriter, r *http.Request) {
     fmt.Println("handleCreate")
     //todo
+    table_name := strings.Split(r.URL.Path, "/")[1] //[0] == ""
+    err = templates.ExecuteTemplate(w, "create.html", table_name)
 }
 
 func handleRead(w http.ResponseWriter, r *http.Request) {
     fmt.Println("handleRead")
     //query a table (name from url)
-    arr_name := strings.Split(r.URL.Path, "/")
-    table_name := arr_name[1] //[0] == ""
+    table_name := strings.Split(r.URL.Path, "/")[1] //[0] == ""
     query := fmt.Sprintf("SELECT id,name FROM %s;", table_name)
     rows,err := db.Query(query)
     if err500(w, err) {return}
@@ -71,6 +72,7 @@ func handleRead(w http.ResponseWriter, r *http.Request) {
     var srows []Npc
     for rows.Next() {
         np := Npc{}
+        //err = rows.Scan(&np.Id, &np.Name)
         err = rows.Scan(&np.Id, &np.Name)
         if err500(w, err) {return}
         srows = append(srows, np)
