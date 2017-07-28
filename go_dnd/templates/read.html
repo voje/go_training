@@ -1,0 +1,22 @@
+<!doctype html>
+
+<html>
+
+    <head>
+        <title>Table: {{ .Name }}</title>
+    </head>
+    <body>
+        <h2> Table contents: </h2>
+        <div>
+            <table>
+            {{range $key, $val := .Rows}}
+            <tr>
+                <td>{{ $val.Id }}</td>
+                <td>{{ $val.Name }}</td>
+            </tr>
+            {{end}}
+            </table>
+        </div>
+    </body>
+
+</html>

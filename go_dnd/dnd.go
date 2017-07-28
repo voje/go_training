@@ -8,12 +8,19 @@ import (
     _ "github.com/lib/pq" //import a package for its side-effects only
     //"reflect"
     "strings"
+    "github.com/go_training/my_mux"
+    "regexp"
 )
 
-var templates = template.Must(template.ParseFiles("./templates/index.html"))
+var templates = template.Must(template.ParseFiles("./templates/index.html", "./templates/read.html"))
 var db *sql.DB
 var err error
 var m map[string]interface{}
+
+type Post struct{
+    Name    string
+    Rows    interface{}
+}
 
 func err500(w http.ResponseWriter, err error) bool {
     if err != nil {
@@ -56,31 +63,23 @@ func handleRead(w http.ResponseWriter, r *http.Request) {
     fmt.Println("handleRead")
     //query a table (name from url)
     arr_name := strings.Split(r.URL.Path, "/")
-    table_name := arr_name[len(arr_name)-2]
-    fmt.Println(table_name)
-    //
-}
-
-func init_db_structs() map[string]interface{} {
-    m = make(map[string]interface{})
-    m["npc"] = npc{}
-    m["race"] = race{}
-    return m
-}
-
-type ServeMux struct {
-    mu      sync.RWMutex
-    m       map[string]muxEntry
-    hosts   bool
-}
-type muxEntry struct {
-    explicit    bool
-    h           Handler
-    pattern     string
+    table_name := arr_name[1] //[0] == ""
+    query := fmt.Sprintf("SELECT id,name FROM %s;", table_name)
+    rows,err := db.Query(query)
+    if err500(w, err) {return}
+    defer rows.Close()
+    var srows []Npc
+    for rows.Next() {
+        np := Npc{}
+        err = rows.Scan(&np.Id, &np.Name)
+        if err500(w, err) {return}
+        srows = append(srows, np)
+    }
+    err = templates.ExecuteTemplate(w, "read.html", Post{Name: table_name, Rows: srows})
+    if err500(w, err) {return}
 }
 
 func main(){
-
     dbname := "dnd"
     uname := "gopher"
 
@@ -89,6 +88,7 @@ func main(){
     //structs that represent database tables in ./db_structs.go
     m = init_db_structs()
 
+    //connect to postgres db
     db, err = sql.Open("postgres",
         fmt.Sprintf("dbname=%s user=%s password=gopher", dbname, uname))
     if err != nil {
@@ -100,10 +100,18 @@ func main(){
         fmt.Printf("%s connected to database: %s.\n", uname, dbname)
     }
 
-    //CRUD: create, read, update, delete
-    http.HandleFunc("/index", handleIndex)
-    http.HandleFunc("/create", handleCreate)
-    http.HandleFunc("/read", handleCreate)
+    //custom multiplexer (cuts away trailing '/')
+    mux := my_mux.Regex_mux{}
 
-    http.ListenAndServe(":8001", nil)
+    //CRUD: create, read, update, delete
+    regIndex,_ := regexp.Compile(`^(\/index)?$`);
+    mux.HandleFunc(regIndex, handleIndex)
+
+    regCreate,_ := regexp.Compile(`^\/[a-zA-Z_0-9]+\/create$`);
+    mux.HandleFunc(regCreate, handleCreate)
+
+    regRead,_ := regexp.Compile(`^\/[a-zA-Z_0-9]+\/read$`);
+    mux.HandleFunc(regRead, handleRead)
+
+    http.ListenAndServe(":8001", mux)
 }

@@ -2,7 +2,7 @@ package my_mux
 
 import (
     "net/http"
-    "fmt"
+    //"fmt"
     "regexp"
 )
 
@@ -31,7 +31,7 @@ func (rm Regex_mux) ServeHTTP (w http.ResponseWriter, r *http.Request) {
             return
         }
     }
-    http.Redirect(w, r, "/", http.StatusNotFound)
+    http.Redirect(w, r, "/", http.StatusFound)
 }
 
 /*

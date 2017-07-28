@@ -9,7 +9,7 @@
         <h1> Select a table: </h1>
         <div>
         {{range $key, $val := .}}
-            <p><a href="derp">{{ $val }}</a></p>
+        <p><a href="/{{ $val }}/read">{{ $val }}</a></p>
         {{end}}
         </div>
     </body>
