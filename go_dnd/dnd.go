@@ -92,12 +92,12 @@ func main(){
 
     //connect to postgres db
     db, err = sql.Open("postgres",
-        fmt.Sprintf("dbname=%s user=%s password=gopher", dbname, uname))
+        fmt.Sprintf("dbname=%s user=%s password=gopher, sslmode=disable", dbname, uname)) //couldn't ping on arch with ssl mode enabled
     if err != nil {
         panic("Couldn't connect to database.")
     }
     if err = db.Ping(); err != nil {
-        panic("Couldn't ping database.")
+        panic(err.Error())
     } else {
         fmt.Printf("%s connected to database: %s.\n", uname, dbname)
     }
