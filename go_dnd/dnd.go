@@ -15,7 +15,6 @@ import (
 var templates = template.Must(template.ParseFiles("./templates/index.html", "./templates/read.html"))
 var db *sql.DB
 var err error
-var db_structs map[string]TableRow
 
 type Post struct{
     Name    string
@@ -69,10 +68,9 @@ func handleRead(w http.ResponseWriter, r *http.Request) {
     rows,err := db.Query(query)
     if err500(w, err) {return}
     defer rows.Close()
-    //TODO different tables
-    trow := db_structs[table_name]
     var srows []TableRow
     for rows.Next() {
+        trow := new_db_struct(table_name)
         //err = rows.Scan(&np.Id, &np.Name)
         err = trow.Scan(rows)
         if err500(w, err) {return}
@@ -89,7 +87,6 @@ func main(){
     fmt.Println("Starting dnd.main")
 
     //structs that represent database tables in ./db_structs.go
-    db_structs = init_db_structs()
 
     //connect to postgres db
     db, err = sql.Open("postgres",

@@ -27,13 +27,14 @@ func (r *Race) Scan (rows *sql.Rows) error {
   return rows.Scan(&r.Id, &r.Name)
 }
 
-func init_db_structs() map[string]TableRow {
-  m := make(map[string]TableRow)
-  //interface TableRow has methods for pointers,
-  //therefore TableRow is of pointer type
-  m["npc"] = &Npc{}
-  m["race"] = &Race{}
-  return m
+func new_db_struct(s string) TableRow {
+  switch s {
+    case "npc":
+      return new(Npc)
+    case "race":
+      return new(Race)
+  }
+  return nil
 }
 
 
