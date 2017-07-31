@@ -1,0 +1,17 @@
+<!doctype html>
+
+<html>
+
+    <head>
+        <title>Create</title>
+    </head>
+    <body>
+      <h1> Create entry in: {{ . }} </h1>
+      <form action="/{{.}}/create" method="POST">
+        Name:<br>
+        <input type="text" name="name"><br>
+        <input type="submit" value="Submit">
+      </form>
+    </body>
+
+</html>

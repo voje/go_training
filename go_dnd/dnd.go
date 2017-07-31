@@ -10,14 +10,22 @@ import (
     "strings"
     "github.com/go_training/my_mux"
     "regexp"
+    "strconv"
 )
 
-var templates = template.Must(template.ParseFiles("./templates/index.html", "./templates/read.html"))
+var templates = template.Must(template.ParseFiles(
+  "templates/index.html",
+  "templates/read.html",
+  "templates/create.html",
+  "templates/toggle_update.html",
+  "templates/update.html",
+  "templates/toggle_delete.html" ))
 var db *sql.DB
 var err error
 
 type Post struct{
     Name    string
+    Id      int32
     Rows    interface{}
 }
 
@@ -55,9 +63,18 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 
 func handleCreate(w http.ResponseWriter, r *http.Request) {
     fmt.Println("handleCreate")
-    //todo
     table_name := strings.Split(r.URL.Path, "/")[1] //[0] == ""
-    err = templates.ExecuteTemplate(w, "create.html", table_name)
+    //fmt.Println(r.Method)
+    if r.Method == "GET" {
+      err = templates.ExecuteTemplate(w, "create.html", table_name)
+      if err500(w, err) {return}
+    } else if r.Method == "POST" {
+      contents := r.FormValue("name")
+      query := fmt.Sprintf("INSERT INTO %s (name) VALUES ('%s')", table_name, contents)
+      _,err := db.Query(query)
+      if err500(w, err) {return}
+      http.Redirect(w, r, fmt.Sprintf("/%s/read", table_name), http.StatusFound)
+    }
 }
 
 func handleRead(w http.ResponseWriter, r *http.Request) {
@@ -78,6 +95,77 @@ func handleRead(w http.ResponseWriter, r *http.Request) {
     }
     err = templates.ExecuteTemplate(w, "read.html", Post{Name: table_name, Rows: srows})
     if err500(w, err) {return}
+}
+
+func handleToggleUpdate(w http.ResponseWriter, r *http.Request) {
+    fmt.Println("handleToggleUpdate")
+    table_name := strings.Split(r.URL.Path, "/")[1] //[0] == ""
+    if r.Method == "GET" {
+      //query a table (name from url)
+      query := fmt.Sprintf("SELECT id,name FROM %s;", table_name)
+      rows,err := db.Query(query)
+      if err500(w, err) {return}
+      defer rows.Close()
+      var srows []TableRow
+      for rows.Next() {
+          trow := new_db_struct(table_name)
+          //err = rows.Scan(&np.Id, &np.Name)
+          err = trow.Scan(rows)
+          if err500(w, err) {return}
+          srows = append(srows, trow)
+      }
+      err = templates.ExecuteTemplate(w, "toggle_update.html", Post{Name: table_name, Rows: srows})
+      if err500(w, err) {return}
+    }
+}
+
+func handleUpdate(w http.ResponseWriter, r *http.Request) {
+  fmt.Println("handleUpdate")
+  table_name := strings.Split(r.URL.Path, "/")[1] //[0] == ""
+  tid,_ := strconv.Atoi(strings.Split(r.URL.Path, "/")[2])
+  id := int32(tid)
+  if r.Method == "GET" {
+    err := templates.ExecuteTemplate(w, "update.html", Post{Name: table_name, Id: id})
+    if err500(w, err) {return}
+  } else if r.Method == "POST" {
+    query := fmt.Sprintf("UPDATE %s SET name = '%s' WHERE id = %d;", table_name, r.FormValue("name"), id)
+    _,err := db.Query(query)
+    if err500(w, err) {return}
+    http.Redirect(w, r, fmt.Sprintf("/%s/read/", table_name), http.StatusFound)
+  }
+}
+
+func handleToggleDelete(w http.ResponseWriter, r *http.Request) {
+    fmt.Println("handleToggleDelete")
+    table_name := strings.Split(r.URL.Path, "/")[1] //[0] == ""
+    if r.Method == "GET" {
+      //query a table (name from url)
+      query := fmt.Sprintf("SELECT id,name FROM %s;", table_name)
+      rows,err := db.Query(query)
+      if err500(w, err) {return}
+      defer rows.Close()
+      var srows []TableRow
+      for rows.Next() {
+          trow := new_db_struct(table_name)
+          //err = rows.Scan(&np.Id, &np.Name)
+          err = trow.Scan(rows)
+          if err500(w, err) {return}
+          srows = append(srows, trow)
+      }
+      err = templates.ExecuteTemplate(w, "toggle_delete.html", Post{Name: table_name, Rows: srows})
+      if err500(w, err) {return}
+    }
+}
+
+func handleDelete(w http.ResponseWriter, r *http.Request) {
+  fmt.Println("handleDelete")
+  table_name := strings.Split(r.URL.Path, "/")[1]
+  tid,_ := strconv.Atoi(strings.Split(r.URL.Path, "/")[2])
+  id := int32(tid)
+  query := fmt.Sprintf("DELETE FROM %s WHERE id = %d", table_name, id)
+  _, err := db.Query(query)
+  if err500(w, err) {return}
+  http.Redirect(w, r, fmt.Sprintf("/%s/read", table_name), http.StatusFound)
 }
 
 func main(){
@@ -104,14 +192,26 @@ func main(){
     mux := my_mux.Regex_mux{}
 
     //CRUD: create, read, update, delete
-    regIndex,_ := regexp.Compile(`^(\/index)?$`);
+    regIndex,_ := regexp.Compile(`^(\/index)?$`)
     mux.HandleFunc(regIndex, handleIndex)
 
-    regCreate,_ := regexp.Compile(`^\/[a-zA-Z_0-9]+\/create$`);
+    regCreate,_ := regexp.Compile(`^\/[a-zA-Z_0-9]+\/create$`)
     mux.HandleFunc(regCreate, handleCreate)
 
-    regRead,_ := regexp.Compile(`^\/[a-zA-Z_0-9]+\/read$`);
+    regRead,_ := regexp.Compile(`^\/[a-zA-Z_0-9]+\/read$`)
     mux.HandleFunc(regRead, handleRead)
+
+    regToggleUpdate,_ := regexp.Compile(`^\/[a-zA-Z_0-9]+\/toggle_update$`)
+    mux.HandleFunc(regToggleUpdate, handleToggleUpdate)
+
+    regToggleDelete,_ := regexp.Compile(`^\/[a-zA-Z_0-9]+\/toggle_delete$`)
+    mux.HandleFunc(regToggleDelete, handleToggleDelete)
+
+    regDelete,_ := regexp.Compile(`^\/[a-zA-Z_0-9]+\/[0-9]*\/delete$`)
+    mux.HandleFunc(regDelete, handleDelete)
+
+    regUpdate,_ := regexp.Compile(`^\/[a-zA-Z_0-9]+\/[0-9]*\/update$`)
+    mux.HandleFunc(regUpdate, handleUpdate)
 
     http.ListenAndServe(":8001", mux)
 }

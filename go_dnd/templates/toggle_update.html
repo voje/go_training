@@ -12,16 +12,10 @@
             {{range $key, $val := .Rows}}
             <tr>
                 <td>{{ $val.Id }}</td>
-                <td>{{ $val.Name }}</td>
+                <td><a href="/{{ $.Name }}/{{ $val.Id }}/update">{{ $val.Name }}</td>
             </tr>
             {{end}}
             </table>
-        </div>
-        <div>
-          [<a href="/{{.Name}}/create">create</a>]<br>
-          [<a href="/{{.Name}}/toggle_update">update</a>]<br>
-          [<a href="/{{.Name}}/toggle_delete">delete</a>]<br>
-          [<a href="/">index</a>]<br>
         </div>
     </body>
 
