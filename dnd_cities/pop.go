@@ -29,7 +29,7 @@ func check(e error) {
     }
 }
 
-var url_to_file = make(map[string]string)
+var visited = make(map[string]bool)
 
 func generic_read_page(url string) io.Reader{
     filepath := "./cache/" + strings.Replace(url, "/", "_", -1)
@@ -45,6 +45,36 @@ func generic_read_page(url string) io.Reader{
         fmt.Printf("File %s found in cache.\n", filepath)
     }
     return page
+}
+
+func read_city_page(url string) {
+    url = "http://forgottenrealms.wikia.com" + url
+    pageFile := generic_read_page(url)
+    tok := html.NewTokenizer(pageFile)
+    scraping := false
+    for {
+        tt := tok.Next()
+        switch tt {
+        case html.ErrorToken:
+            fmt.Println("EOF")
+            return
+        case html.StartTagToken:
+            t := tok.Token()
+            if t.Data == "h3" {
+                tok.Next();
+                t := tok.Token()
+                if t.Data == "Population" {
+                    scraping = true
+                }
+            }
+        case html.TextToken:
+            if (scraping) {
+                t := tok.Token()
+                fmt.Println(t.Data) //TODO bump in the road.. webpage is dynamic
+                return
+            }
+        }
+    }
 }
 
 func loop_main_page() {
@@ -67,7 +97,12 @@ func loop_main_page() {
                 }
             } else if t.Data == "a" && scraping {
                 _,res := get_attr_val("href", &t)
-                fmt.Println(res) //TODO scrape details from town page
+                if _,ok := visited[res]; ok {
+                    continue
+                } else {
+                    visited[res] = true
+                }
+                go read_city_page(res)
             }
         case html.EndTagToken:
             t := tok.Token()

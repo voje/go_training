@@ -1,0 +1,27 @@
+HTTP/1.1 200 OK
+Connection: close
+Accept-Ranges: bytes
+Age: 77473
+Cache-Control: private, s-maxage=0, max-age=0, must-revalidate
+Connection: keep-alive
+Content-Language: en
+Content-Type: text/html; charset=utf-8
+Date: Tue, 08 Aug 2017 09:42:39 GMT
+Etag: "20170708015031-1501759770"
+Fastly-Debug-Digest: d76c35bd6e1aa9d3bd592915313ebaffaa85da3ba8c8e7e61ee3ba8dcbdedb7d
+Last-Modified: Sat, 08 Jul 2017 01:50:31 GMT
+Server: Apache
+Set-Cookie: wikia_beacon_id=9iL7BuSSLB; domain=.wikia.com; path=/; expires=Sun, 04 Feb 2018 09:42:39 GMT;
+Set-Cookie: wikia_session_id=jis5GEmNr1; domain=.wikia.com; path=/; expires=Tue, 08 Aug 2017 10:12:39 GMT;
+Set-Cookie: Geo={%22region%22:%2261%22%2C%22country%22:%22SI%22%2C%22continent%22:%22EU%22}; path=/
+Vary: Accept-Encoding,Cookie
+X-Backend-Response-Time: 0.191
+X-Cache: ORIGIN, HIT, MISS
+X-Cache-Hits: ORIGIN, 2, 0
+X-Cacheable: YES
+X-Content-Type-Options: nosniff
+X-Served-By: ap-s245, cache-wk-sjc3160-WIKIA, cache-fra1249-FRA
+X-Span-Id: 5bb54f14-d975-47e0-8957-830523f75931
+X-Timer: S1502185360.574029,VS0,VE183
+X-Trace-Id: 7b72ec2c-d895-4f05-a9e9-cd96ffcfb918
+
