@@ -14,6 +14,15 @@ func check(e error) {
     }
 }
 
+func get_attr_val(t html.Token, key string) string {
+    for _,att := range t.Attr {
+        if att.Key == key {
+            return att.Val
+        }
+    }
+    return "err"
+}
+
 func find_table(tok *html.Tokenizer) html.Token {
     for {
         tt := tok.Next()
@@ -49,9 +58,10 @@ func find_a(tok *html.Tokenizer) html.Token {
 }
 
 func skip_subtree(tok *html.Tokenizer, t html.Token) {
+    fmt.Printf("skipping subtree: %s\n", t.Data)
     depth := 0
     tag := t.Data
-    fmt.Println(tag)
+    //fmt.Println(tag)
     for {
         tt := tok.Next()
         switch tt {
@@ -64,6 +74,7 @@ func skip_subtree(tok *html.Tokenizer, t html.Token) {
             t = tok.Token()
             if t.Data == tag {
                 if depth == 0 {
+                    fmt.Printf("skipped subtree: %s\n", t.Data)
                     return
                 }
                 depth--
@@ -92,6 +103,7 @@ func main() {
             t := tok.Token()
             if t.Data == "tr" {
                 skip_subtree(tok, t) //skip first row
+                break
             }
         }
     }
@@ -113,6 +125,18 @@ func main() {
                 case 2:
                     find_a(tok)
                     tok.Next()
+                    t = tok.Token()
+                    fmt.Printf("Name: %s\n", t.Data)
+                case 3:
+                    tok.Next()
+                    t = tok.Token()
+                    fmt.Printf("Population: %s\n", t.Data)
+                case 5:
+                    t = find_a(tok)
+                    url := get_attr_val(t, "href")
+                    tok.Next()
+                    t = tok.Token()
+                    fmt.Printf("Capital: %s [%s]\n", t.Data, url)
                 }
             }
         case html.EndTagToken:
