@@ -14,6 +14,40 @@ func check(e error) {
     }
 }
 
+func find_table(tok *html.Tokenizer) html.Token {
+    for {
+        tt := tok.Next()
+        switch tt {
+        case html.ErrorToken:
+            panic("find_table EOF")
+        case html.StartTagToken:
+            t := tok.Token()
+            if t.Data == "table" {
+                for _,at := range t.Attr {
+                    if at.Key == "class" && at.Val == "sortable wikitable" {
+                        return t
+                    }
+                }
+            }
+        }
+    }
+}
+
+func find_a(tok *html.Tokenizer) html.Token {
+    for {
+        tt := tok.Next()
+        switch tt {
+        case html.ErrorToken:
+            panic("find_a EOF")
+        case html.StartTagToken:
+            t := tok.Token()
+            if t.Data == "a" {
+                return t
+            }
+        }
+    }
+}
+
 func skip_subtree(tok *html.Tokenizer, t html.Token) {
     depth := 0
     tag := t.Data
@@ -51,43 +85,48 @@ func main() {
     */
     tok := html.NewTokenizer(page.Body)
 
-    inTable := false
+    find_table(tok)
+    for {
+        tt := tok.Next()
+        if tt == html.StartTagToken {
+            t := tok.Token()
+            if t.Data == "tr" {
+                skip_subtree(tok, t) //skip first row
+            }
+        }
+    }
+    var t html.Token
+    var td int
     for {
         tt := tok.Next()
         switch tt {
         case html.ErrorToken:
-            fmt.Println("EOF")
-            return
+            panic("main EOF")
         case html.StartTagToken:
-            t := tok.Token()
+            t = tok.Token()
             switch {
-            case t.Data == "table":
-                if t.Attr[0].Val == "sortable wikitable" {
-                    inTable = true
-                }
-            case t.Data == "tr" && inTable:
-                skip_subtree(tok, t)
-                ntd := 0
-                for ntd <= 5 {
+            case t.Data == "tr":
+                td = 0
+            case t.Data == "td":
+                td++
+                switch td {
+                case 2:
+                    find_a(tok)
                     tok.Next()
-                    t := tok.Token()
-                    if t.Data == "td" { ntd++ }
-                    //fmt.Printf("[ntd: %d] %s\n", ntd, t.Data)
-                    switch {
-                    case ntd == 3:
-                        tok.Next() //<td>
-                        tok.Next() //<a>
-                        t = tok.Token()
-                        fmt.Println(t.Data)
-                    }
                 }
             }
         case html.EndTagToken:
-            t := tok.Token()
-            if inTable && t.Data == "table" {
+            t = tok.Token()
+            if t.Data == "table" {
                 fmt.Println("Finished reading table")
                 return
             }
         }
     }
 }
+
+
+
+
+
+
