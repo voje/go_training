@@ -7,11 +7,13 @@ import (
     //"io/ioutil"
     //"os"
     "sync"
-    "reflect"
+    //"time"
 )
 
 var main_url string = "https://en.wikipedia.org"
 var lock sync.Mutex
+var done chan bool = make(chan bool)
+var ndone int = 0
 
 type country struct {
     Name    string
@@ -24,19 +26,27 @@ var data = make(map[string] country)
 func add_country(name string) {
     lock.Lock()
     defer lock.Unlock()
-    data[name] = country{City: name}
+    data[name] = country{Name: name}
 }
 
 func update_country(name string, key string, val string) {
     lock.Lock()
     defer lock.Unlock()
-    if _,ok := data[name]; !ok {
+    cty,ok := data[name]
+    if !ok {
         panic("update_country: country doesn't exist in data")
     }
-    //todo
-    v := reflect.ValueOf(data[name])
-    f := v.FieldByName(key)
-    f.SetBytes([]byte(val)) //ERR todo (unaddressable ...)
+    switch key {
+    case "Name":
+        cty.Name = val
+    case "Pop":
+        cty.Pop = val
+    case "City":
+        cty.City = val
+    case "Cpop":
+        cty.Cpop = val
+    }
+    data[name] = cty
 }
 
 func print_data() {
@@ -75,6 +85,7 @@ func scrape_city(url string, cname string) {
                 tok.Next()
                 t = tok.Token()
                 update_country(cname, "Cpop", t.Data)
+                done <- true
                 return
             }
         }
@@ -204,13 +215,21 @@ func main() {
                     tok.Next()
                     t = tok.Token()
                     update_country(cname, "City", t.Data)
-                    scrape_city(main_url + url, cname)
+                    ndone ++
+                    go scrape_city(main_url + url, cname)
                 }
             }
         case html.EndTagToken:
             t = tok.Token()
             if t.Data == "table" {
                 fmt.Println("Finished reading table")
+                //time.Sleep(time.Second * 10) //todo
+
+                for i:=0; i<ndone; i++ {
+                    fmt.Println(i)
+                    <- done
+                }
+
                 print_data()
                 return
             }
